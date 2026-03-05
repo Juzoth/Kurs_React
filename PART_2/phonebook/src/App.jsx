@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import personService from './services/persons'
-
-
 
 const Filter = ({ searchTerm, handleSearchChange }) => (
   <div>
     Search: <input value={searchTerm} onChange={handleSearchChange} />
   </div>
 );
-
 
 const PersonForm = ({
   newName,
@@ -31,7 +27,6 @@ const PersonForm = ({
   </div>
 );
 
-
 const Persons = ({ persons }) => (
   <ul>
     {persons.map((person) => (
@@ -40,74 +35,71 @@ const Persons = ({ persons }) => (
   </ul>
 );
 
-
-
-
 const App = () => {
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ])
-
-  const [newName, setNewName] = useState('')
-  const [newNumber, setNewNumber] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-
-
+  
   useEffect(() => {
-    console.log('effect')
     axios
       .get('http://localhost:3001/persons')
       .then(response => {
-        console.log('promise fulfilled')
-        console.log(response.data)
-        setPersons(response.data)
+        setPersons(response.data);
+        console.log(`Fetched ${response.data.length} persons from the database`);
       })
-  }, [])
-  console.log('render', persons.length, 'persons')
+  }, []);
 
   const handleNameChange = (event) => {
-    setNewName(event.target.value)
-  }
+    setNewName(event.target.value);
+  };
 
   const handleNumberChange = (event) => {
-    setNewNumber(event.target.value)
-  }
+    setNewNumber(event.target.value);
+  };
 
   const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value)
-  }
+    setSearchTerm(event.target.value);
+  };
 
   const addPerson = () => {
     if (newName.trim() === '') {
       window.alert("Name can't be empty");
-      return
+      return;
     }
     if (persons.some(person => person.name === newName)) {
       window.alert(`"${newName}" is already added to phonebook`);
-      return
+      return;
     }
-    const newPerson = { name: newName, number: newNumber, id: persons.length + 1 }
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNumber('')
-  }
+
+    const newPerson = { name: newName, number: newNumber, id: persons.length + 1 };
+
+    console.log(`Adding new person: ${newPerson.name} with number: ${newPerson.number}`);
+
+    axios.post('http://localhost:3001/persons', newPerson)
+      .then(response => {
+        setPersons(persons.concat(response.data));
+        console.log(`Number added: ${response.data.name} (${response.data.number})`);
+        console.log(`Total persons in database: ${persons.length + 1}`);
+        setNewName('');
+        setNewNumber('');
+      })
+      .catch(error => {
+        console.error('Error saving person:', error);
+      });
+  };
 
   const filteredPersons = persons.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   return (
     <div>
       <h2>Phonebook</h2>
-
       <Filter searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
 
       <h3>Add a new</h3>
-
       <PersonForm
         newName={newName}
         handleNameChange={handleNameChange}
@@ -117,10 +109,9 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-
       <Persons persons={filteredPersons} />
     </div>
-  )
-}
+  );
+};
 
 export default App

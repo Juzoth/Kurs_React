@@ -27,13 +27,18 @@ const PersonForm = ({
   </div>
 );
 
-const Persons = ({ persons }) => (
+const Persons = ({ persons, handleDelete }) => (
   <ul>
     {persons.map(person => (
-      <li key={person.id}>{person.name} {person.number}</li>
+      <li key={person.id}>
+        {person.name} {person.number}
+        <button onClick={() => handleDelete(person.id, person.name)}>delete</button>
+      </li>
     ))}
   </ul>
 );
+
+
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -63,16 +68,29 @@ const App = () => {
       alert(`${newName} is already added`);
       return;
     }
-    
-    const newId = persons.length + 1;
 
-    const newPerson = { id: newId, name: newName, number: newNumber };
+    const newPerson = { name: newName, number: newNumber };
     personService.create(newPerson).then(returnedPerson => {
       console.log('Person added:', returnedPerson);
       setPersons(persons.concat(returnedPerson));
       setNewName('');
       setNewNumber('');
     });
+  };
+
+  const handleDelete = (id, name) => {
+    const confirmDeletion = window.confirm(`Are you sure you want to delete ${name}?`);
+    if (!confirmDeletion) return;
+
+    personService
+      .remove(id)
+      .then(() => {
+        setPersons(persons.filter(p => p.id !== id));
+      })
+      .catch(error => {
+        alert(`Information of ${name} has already been removed from server`);
+        setPersons(persons.filter(p => p.id !== id));
+      });
   };
 
   const filteredPersons = persons.filter(p =>
@@ -94,7 +112,7 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-      <Persons persons={filteredPersons} />
+      <Persons persons={filteredPersons} handleDelete={handleDelete} />
     </div>
   );
 };

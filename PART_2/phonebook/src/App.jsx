@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import personService from './services/persons';
 
+// Komponent do wyszukiwania kontaktow
 const Filter = ({ searchTerm, handleSearchChange }) => (
   <div>
     Search: <input value={searchTerm} onChange={handleSearchChange} />
   </div>
 );
 
+// Szkielet komponentu formularza do dodawania nowych kontaktów
 const PersonForm = ({
   newName,
   handleNameChange,
@@ -27,6 +29,7 @@ const PersonForm = ({
   </div>
 );
 
+// Szkielet komponentu do wyświetlania listy kontaktów
 const Persons = ({ persons, handleDelete }) => (
   <ul>
     {persons.map(person => (
@@ -41,11 +44,16 @@ const Persons = ({ persons, handleDelete }) => (
 
 
 const App = () => {
+  // Dynamiczne przechowywanie listy kontaktów pobranych z serwera
   const [persons, setPersons] = useState([]);
+  // Dynamiczne przechowywanie wartości inputu dla imienia nowego kontaktu
   const [newName, setNewName] = useState('');
+  // Dynamiczne przechowywanie wartości inputu dla numeru telefonu nowego kontaktu
   const [newNumber, setNewNumber] = useState('');
+  // Dynamiczne przechowywanie wartości inputu dla wyszukiwarki kontaktów
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Pobranie kontaktów z serwera przy pierwszym renderze komponentu
   useEffect(() => {
     console.log('Fetching persons from backend...');
     personService.getAll().then(initialPersons => {
@@ -54,48 +62,79 @@ const App = () => {
     });
   }, []);
 
+  // Obsluga zmiany imienia
   const handleNameChange = (e) => setNewName(e.target.value);
+  // Obsluga zmiany numeru telefonu
   const handleNumberChange = (e) => setNewNumber(e.target.value);
+  // Obsluga zmiany tekstu w wyszukiwarce
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
+  // Dodanie lub aktualizacja kontaktu - sprawdzenie istnienia, potwierdzenie i odpowiednie zapytanie do serwera
   const addPerson = () => {
     console.log('Adding person:', newName, newNumber);
+    // Sprawdzenie czy pole nie jest puste
     if (newName.trim() === '') {
       alert("Name can't be empty");
       return;
     }
-    if (persons.some(p => p.name === newName)) {
-      alert(`${newName} is already added`);
-      return;
-    }
+    
+    // Sprawdzenie, czy osoba o tej samej nazwie już istnieje
+    const existingPerson = persons.find(p => p.name === newName);
+    
+    if (existingPerson) {
+      // If obslugujacy zapytanie: jesli kontakt istnieje, zapytaj o potwierdzenie aktualizacji numeru
+      const confirmUpdate = window.confirm(`${newName} is already added to phonebook. Replace the old number with a new one?`);
+      if (!confirmUpdate) return;
 
-    const newPerson = { name: newName, number: newNumber };
-    personService.create(newPerson).then(returnedPerson => {
-      console.log('Person added:', returnedPerson);
-      setPersons(persons.concat(returnedPerson));
-      setNewName('');
-      setNewNumber('');
-    });
+      // Aktualizacja istniejącego kontaktu za pomocą PUT request
+      const updatedPerson = { ...existingPerson, number: newNumber };
+      personService.update(existingPerson.id, updatedPerson).then(returnedPerson => {
+        console.log('Person updated:', returnedPerson);
+        // Aktualizacja lokalnie po udanym update z serwera
+        setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson));
+        // Czyszczenie inputow po aktualizacji kontaktu
+        setNewName('');
+        setNewNumber('');
+      });
+    } else {
+      // Jesli osoba nie istnieje - dodaj nowy kontakt za pomocą POST request
+      const newPerson = { name: newName, number: newNumber };
+      personService.create(newPerson).then(returnedPerson => {
+        console.log('Person added:', returnedPerson);
+        // Dodanie nowego kontaktu do listy
+        setPersons(persons.concat(returnedPerson));
+        // Czyszczenie inputow po aktualizacji kontaktu
+        setNewName('');
+        setNewNumber('');
+      });
+    }
   };
 
+  // Obsluga usuwania kontaktu - potwierdzenie i aktualizacja stanu po usunięciu
   const handleDelete = (id, name) => {
     const confirmDeletion = window.confirm(`Are you sure you want to delete ${name}?`);
     if (!confirmDeletion) return;
 
+    // Usuwanie kontaktu z serwera
     personService
       .remove(id)
       .then(() => {
+        // Usuwanie lokalnie po udanym usunięciu z serwera
         setPersons(persons.filter(p => p.id !== id));
+        console.log(`Person with id ${id} deleted`);
       })
       .catch(error => {
+        // Wyswietlen alertu, gdy kontakt został już usunięty z serwera
         alert(`Information of ${name} has already been removed from server`);
-        setPersons(persons.filter(p => p.id !== id));
       });
   };
 
+  // Filtrowanie konatkow przez tekst wpisany w wyszukiwarke
   const filteredPersons = persons.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+
 
   return (
     <div>

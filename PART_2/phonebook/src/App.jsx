@@ -53,6 +53,7 @@ const App = () => {
   // Dynamiczne przechowywanie wartości inputu dla wyszukiwarki kontaktów
   const [searchTerm, setSearchTerm] = useState('');
 
+  
   // Pobranie kontaktów z serwera przy pierwszym renderze komponentu
   useEffect(() => {
     console.log('Fetching persons from backend...');
@@ -62,12 +63,14 @@ const App = () => {
     });
   }, []);
 
+
   // Obsluga zmiany imienia
   const handleNameChange = (e) => setNewName(e.target.value);
   // Obsluga zmiany numeru telefonu
   const handleNumberChange = (e) => setNewNumber(e.target.value);
   // Obsluga zmiany tekstu w wyszukiwarce
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
+
 
   // Dodanie lub aktualizacja kontaktu - sprawdzenie istnienia, potwierdzenie i odpowiednie zapytanie do serwera
   const addPerson = () => {
@@ -96,7 +99,9 @@ const App = () => {
         setNewName('');
         setNewNumber('');
       });
-    } else {
+    } 
+
+    else {
       // Jesli osoba nie istnieje - dodaj nowy kontakt za pomocą POST request
       const newPerson = { name: newName, number: newNumber };
       personService.create(newPerson).then(returnedPerson => {
@@ -110,11 +115,11 @@ const App = () => {
     }
   };
 
+
   // Obsluga usuwania kontaktu - potwierdzenie i aktualizacja stanu po usunięciu
   const handleDelete = (id, name) => {
     const confirmDeletion = window.confirm(`Are you sure you want to delete ${name}?`);
     if (!confirmDeletion) return;
-
     // Usuwanie kontaktu z serwera
     personService
       .remove(id)
@@ -128,6 +133,7 @@ const App = () => {
         alert(`Information of ${name} has already been removed from server`);
       });
   };
+
 
   // Filtrowanie konatkow przez tekst wpisany w wyszukiwarke
   const filteredPersons = persons.filter(p =>

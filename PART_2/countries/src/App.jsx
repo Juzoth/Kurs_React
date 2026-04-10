@@ -4,21 +4,32 @@ import CountriesList from './components/CountriesList';
 import CountryDetail from './components/CountryDetail';
 
 const App = () => {
+  // Stan przechowujący aktualną zapytanie wyszukiwania
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Stan przechowujący listę krajów znalezionych w API
   const [countries, setCountries] = useState([]);
+  
+  // Stan wskazujący, czy trwa ładowanie danych z API
   const [loading, setLoading] = useState(false);
+  
+  // Stan przechowujący komunikat błędu, jeśli wyszukiwanie się nie powiodło
   const [error, setError] = useState('');
 
+  // Efekt uruchamiany za każdym razem, gdy zmienia się zapytanie wyszukiwania
   useEffect(() => {
+    // Jeśli zapytanie jest puste, wyczyść rezultaty
     if (searchQuery.trim() === '') {
       setCountries([]);
       setError('');
       return;
     }
 
+    // Ustaw stan ładowania i wyczyść poprzedni błąd
     setLoading(true);
     setError('');
 
+    // Pobierz dane krajów z REST Countries API
     fetch(`https://restcountries.com/v3.1/name/${searchQuery}`)
       .then(response => {
         if (!response.ok) {
@@ -27,21 +38,26 @@ const App = () => {
         return response.json();
       })
       .then(data => {
+        // Ustaw znalezione kraje w stanie
         setCountries(data);
       })
       .catch(err => {
+        // W przypadku błędu, wyczyść listę i ustaw komunikat błędu
         setCountries([]);
         setError('No countries found');
       })
       .finally(() => {
+        // Zawsze wyłącz stan ładowania
         setLoading(false);
       });
   }, [searchQuery]);
 
+  // Obsługiwacz zmiany zapytania wyszukiwania
   const handleSearch = (query) => {
     setSearchQuery(query);
   };
 
+  // Obsługiwacz wyboru konkretnego kraju z listy
   const handleSelectCountry = (country) => {
     setCountries([country]);
   };
@@ -49,6 +65,7 @@ const App = () => {
   return (
     <div className="container">
       <h1>Country Information Search</h1>
+      
       <SearchCountries onSearch={handleSearch} />
       
       {loading && <p className="loading">Loading...</p>}

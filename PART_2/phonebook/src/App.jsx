@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import personService from './services/persons';
+import Notification from './components/Notification';
 
 // Komponent do wyszukiwania kontaktow
 const Filter = ({ searchTerm, handleSearchChange }) => (
@@ -52,6 +53,10 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   // Dynamiczne przechowywanie wartości inputu dla wyszukiwarki kontaktów
   const [searchTerm, setSearchTerm] = useState('');
+  // Dynamiczne przechowywanie wiadomości notyfikacji
+  const [notification, setNotification] = useState(null);
+  // Dynamiczne przechowywanie typu notyfikacji (success lub error)
+  const [notificationType, setNotificationType] = useState(null);
 
   
   // Pobranie kontaktów z serwera przy pierwszym renderze komponentu
@@ -62,6 +67,18 @@ const App = () => {
       setPersons(initialPersons);
     });
   }, []);
+
+  // Funkcja do wyświetlania na kilka sekund
+  const showNotification = (message, type = 'success', duration = 5000) => {
+    setNotification(message);
+    setNotificationType(type);
+    
+    // Automatyczne usunięcie po określonym czasie
+    setTimeout(() => {
+      setNotification(null);
+      setNotificationType(null);
+    }, duration);
+  };
 
 
   // Obsluga zmiany imienia
@@ -91,27 +108,53 @@ const App = () => {
 
       // Aktualizacja istniejącego kontaktu za pomocą PUT request
       const updatedPerson = { ...existingPerson, number: newNumber };
-      personService.update(existingPerson.id, updatedPerson).then(returnedPerson => {
-        console.log('Person updated:', returnedPerson);
-        // Aktualizacja lokalnie po udanym update z serwera
-        setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson));
-        // Czyszczenie inputow po aktualizacji kontaktu
-        setNewName('');
-        setNewNumber('');
-      });
+      personService.update(existingPerson.id, updatedPerson)
+        .then(returnedPerson => {
+          console.log('Person updated:', returnedPerson);
+          // Aktualizacja lokalnie po udanym update z serwera
+          setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson));
+          // Czyszczenie inputow po aktualizacji kontaktu
+          setNewName('');
+          setNewNumber('');
+          // Wyświetlenie notyfikacji o powodzeniu
+          showNotification(`${returnedPerson.name}'s number updated successfully`, 'success');
+        })
+        .catch(error => {
+          console.log('Error updating person:', error);
+          // Jeśli kontakt nie istnieje (404), usuń go z lokalnej listy
+          if (error.response && error.response.status === 404) {
+            setPersons(persons.filter(p => p.id !== existingPerson.id));
+            showNotification(`Information of ${existingPerson.name} has already been removed from server`, 'error');
+          } else {
+            showNotification('Error updating contact', 'error');
+          }
+          // Czyszczenie inputow
+          setNewName('');
+          setNewNumber('');
+        });
     } 
 
     else {
       // Jesli osoba nie istnieje - dodaj nowy kontakt za pomocą POST request
       const newPerson = { name: newName, number: newNumber };
-      personService.create(newPerson).then(returnedPerson => {
-        console.log('Person added:', returnedPerson);
-        // Dodanie nowego kontaktu do listy
-        setPersons(persons.concat(returnedPerson));
-        // Czyszczenie inputow po aktualizacji kontaktu
-        setNewName('');
-        setNewNumber('');
-      });
+      personService.create(newPerson)
+        .then(returnedPerson => {
+          console.log('Person added:', returnedPerson);
+          // Dodanie nowego kontaktu do listy
+          setPersons(persons.concat(returnedPerson));
+          // Czyszczenie inputow po aktualizacji kontaktu
+          setNewName('');
+          setNewNumber('');
+          // Wyświetlenie notyfikacji o powodzeniu
+          showNotification(`${returnedPerson.name} added successfully`, 'success');
+        })
+        .catch(error => {
+          console.log('Error creating person:', error);
+          showNotification('Error adding contact', 'error');
+          // Czyszczenie inputow
+          setNewName('');
+          setNewNumber('');
+        });
     }
   };
 
@@ -127,10 +170,12 @@ const App = () => {
         // Usuwanie lokalnie po udanym usunięciu z serwera
         setPersons(persons.filter(p => p.id !== id));
         console.log(`Person with id ${id} deleted`);
+        // Wyświetlenie notyfikacji o powodzeniu
+        showNotification(`${name} deleted successfully`, 'success');
       })
       .catch(error => {
         // Wyswietlen alertu, gdy kontakt został już usunięty z serwera
-        alert(`Information of ${name} has already been removed from server`);
+        showNotification(`Information of ${name} has already been removed from server`, 'error');
       });
   };
 
@@ -145,6 +190,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification} type={notificationType} />
       <Filter searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
 
       <h3>Add a new</h3>

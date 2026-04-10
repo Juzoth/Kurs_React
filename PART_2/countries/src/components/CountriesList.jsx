@@ -1,11 +1,10 @@
 const CountriesList = ({ countries, onSelectCountry }) => {
   return (
-    <div className="countries-list">
+    <div>
       {countries.map(country => (
-        <div key={country.cca2} className="country-item">
-          <button onClick={() => onSelectCountry(country)}>
-            {country.name.common}
-          </button>
+        <div key={country.cca2}>
+          <span>{country.name.common}</span>
+          <button onClick={() => onSelectCountry(country)}>show</button>
         </div>
       ))}
     </div>

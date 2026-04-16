@@ -1,7 +1,12 @@
+import { useState, useEffect } from 'react';
+import Weather from './Weather';
+
 const CountryDetail = ({ country, onBack }) => {
   const languages = country.languages 
     ? Object.values(country.languages).join(', ') 
     : 'N/A';
+
+  const capital = country.capital?.[0] || null;
 
   return (
     <div>
@@ -19,13 +24,15 @@ const CountryDetail = ({ country, onBack }) => {
       )}
       
       <div>
-        <p>Capital: {country.capital?.[0] || 'N/A'}</p>
+        <p>Capital: {capital || 'N/A'}</p>
         <p>Area: {country.area?.toLocaleString()} km²</p>
         <p>Population: {country.population?.toLocaleString()}</p>
         <p>Region: {country.region || 'N/A'}</p>
         <p>Subregion: {country.subregion || 'N/A'}</p>
         <p>Languages: {languages}</p>
       </div>
+
+      {capital && <Weather capital={capital} />}
     </div>
   );
 };

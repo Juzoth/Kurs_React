@@ -29,6 +29,15 @@ app.get('/api/persons', (req, res) => {
   res.json(persons)
 })
 
+app.get('/info', (req, res) => {
+  const currentTime = new Date().toString()
+  const count = persons.length
+  res.send(`
+    <p>Phonebook has info for ${count} people</p>
+    <p>${currentTime}</p>
+  `)
+})
+
 app.get('/', (req, res) => {
   res.send('Phonebook API - use /api/persons to get the list')
 })

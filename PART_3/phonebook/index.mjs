@@ -25,6 +25,18 @@ const persons = [
   }
 ]
 
+app.delete('/api/persons/:id', (req, res) => {
+  const id = String(req.params.id);
+  const index = persons.findIndex(p => p.id === id);
+  
+  if (index !== -1) {
+    persons.splice(index, 1);
+    res.status(204).end();
+  } else {
+    res.status(404).json({ error: 'Person not found' });
+  }
+});
+
 app.get('/api/persons/:id', (req, res) => {
   const id = String(req.params.id);
   const person = persons.find(p => p.id === id);

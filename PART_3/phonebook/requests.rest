@@ -1,0 +1,8 @@
+### Delete person with id 2
+DELETE http://localhost:3001/api/persons/2
+
+### Delete person with id 1
+DELETE http://localhost:3001/api/persons/1
+
+### Get all persons (to verify deletion)
+GET http://localhost:3001/api/persons

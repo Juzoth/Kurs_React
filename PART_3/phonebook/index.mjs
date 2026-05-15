@@ -1,9 +1,13 @@
 import express from 'express'
+import morgan from 'morgan'
 
 const app = express()
 
-// Middleware to parse JSON
+morgan.token('body', (req) => JSON.stringify(req.body))
+
 app.use(express.json())
+
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 const persons = [
   {
@@ -31,7 +35,6 @@ const persons = [
 app.post('/api/persons', (req, res) => {
   const { name, number } = req.body
 
-  // Check if name or number is missing
   if (!name) {
     return res.status(400).json({ error: 'name is required' })
   }

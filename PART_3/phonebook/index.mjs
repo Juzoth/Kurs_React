@@ -2,6 +2,9 @@ import express from 'express'
 
 const app = express()
 
+// Middleware to parse JSON
+app.use(express.json())
+
 const persons = [
   {
     id: '1',
@@ -24,6 +27,23 @@ const persons = [
     number: '39-23-6423122'
   }
 ]
+
+app.post('/api/persons', (req, res) => {
+  const { name, number } = req.body
+
+  if (!name || !number) {
+    return res.status(400).json({ error: 'Name and number are required' })
+  }
+
+  const newPerson = {
+    id: String(Math.floor(Math.random() * 1000000)),
+    name,
+    number
+  }
+
+  persons.push(newPerson)
+  res.status(201).json(newPerson)
+})
 
 app.delete('/api/persons/:id', (req, res) => {
   const id = String(req.params.id);
@@ -62,7 +82,17 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/', (req, res) => {
-  res.send('Phonebook API - use /api/persons to get the list')
+  res.send(`
+    <h1>Phonebook API</h1>
+    <h2>Available Endpoints:</h2>
+    <ul>
+      <li><strong>GET</strong> /api/persons - Get all phonebook entries</li>
+      <li><strong>GET</strong> /api/persons/:id - Get a specific person by ID</li>
+      <li><strong>POST</strong> /api/persons - Add a new person (requires name and number)</li>
+      <li><strong>DELETE</strong> /api/persons/:id - Delete a person by ID</li>
+      <li><strong>GET</strong> /info - Get phonebook statistics</li>
+    </ul>
+  `)
 })
 
 const PORT = 3001
